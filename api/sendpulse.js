@@ -7,8 +7,12 @@
  *
  */
 
+/* eslint-disable strict */
+
+'use strict';
 
 const request = require('request-promise');
+const debug = require('debug')('sendpulse');
 
 const API_URL = 'api.sendpulse.com';
 
@@ -32,6 +36,7 @@ function base64(data) {
 function SendPulse(userId, secret) {
   this.API_USER_ID = userId;
   this.API_SECRET = secret;
+  this.TOKEN = null;
   this.pendingRequests = [];
   this.getToken();
 }
@@ -48,31 +53,36 @@ function SendPulse(userId, secret) {
  *        when a response is received.
  */
 function sendRequest(path, _method, data, _useToken, callback) {
+  debug('send request:', path, _method, data, _useToken);
   const headers = {};
 
   const useToken = _useToken || false;
   const method = _method || 'POST';
 
   if (useToken && this.TOKEN) {
-    headers.Authorization = `Bearer ${this.TOKEN}`;
+    headers.authorization = `Bearer ${this.TOKEN}`;
   } else if (useToken && !this.TOKEN) {
+    debug('no token yet - queue', path, method, data, useToken);
     this.pendingRequests.push([path, method, data, useToken, callback]);
     return;
   }
 
   const opts = {
-    baseURL: API_URL,
-    uri: `/${path}`,
+    url: `https://${API_URL}/${path}`,
     headers,
+    method,
     json: true,
     body: data,
     transform2xxOnly: true,
     resolveWithFullResponse: true,
   };
 
+  debug('sending %j', opts);
+
   request(opts)
     .then((response) => {
       if (response.statusCode === 401) {
+        debug('response 401, queueing');
         this.TOKEN = null;
         this.getToken();
         this.sendRequest(path, method, data, true, callback);
@@ -84,10 +94,12 @@ function sendRequest(path, _method, data, _useToken, callback) {
         return null;
       }
 
+      debug(response.statusCode, response.body);
       callback(this.returnError());
       return null;
     })
-    .catch(() => {
+    .catch((e) => {
+      debug(e);
       callback(this.returnError());
     });
 }
@@ -97,6 +109,11 @@ function sendRequest(path, _method, data, _useToken, callback) {
  *
  */
 function getToken() {
+  debug('trying to get token');
+  if (this.TOKEN === false) return;
+  debug('enqueue token request');
+  this.TOKEN = false;
+
   const data = {
     grant_type: 'client_credentials',
     client_id: this.API_USER_ID,
@@ -104,6 +121,7 @@ function getToken() {
   };
 
   this.sendRequest('oauth/access_token', 'POST', data, false, (response) => {
+    debug('token response', response);
     this.TOKEN = response.access_token;
 
     // clear the loop
@@ -832,6 +850,7 @@ function smtpSendMail(callback, email) {
 }
 
 SendPulse.prototype.sendRequest = sendRequest;
+SendPulse.prototype.returnError = returnError;
 SendPulse.prototype.getToken = getToken;
 SendPulse.prototype.listAddressBooks = listAddressBooks;
 SendPulse.prototype.createAddressBook = createAddressBook;

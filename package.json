@@ -1,6 +1,6 @@
 {
   "name": "@makeomatic/sendpulse-api",
-  "version": "1.0.0",
+  "version": "1.0.9",
   "description": "A simple SendPulse REST client library and example for Node.js",
   "main": "index.js",
   "publishConfig": {
@@ -32,6 +32,7 @@
     "eslint-plugin-promise": "^3.6.0"
   },
   "dependencies": {
+    "debug": "^3.1.0",
     "request": "^2.83.0",
     "request-promise": "^4.2.2"
   },
