@@ -1,6 +1,6 @@
 {
   "name": "@makeomatic/sendpulse-api",
-  "version": "1.0.9",
+  "version": "1.0.10",
   "description": "A simple SendPulse REST client library and example for Node.js",
   "main": "index.js",
   "publishConfig": {

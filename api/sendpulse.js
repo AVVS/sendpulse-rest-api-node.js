@@ -95,12 +95,12 @@ function sendRequest(path, _method, data, _useToken, callback) {
       }
 
       debug(response.statusCode, response.body);
-      callback(this.returnError());
+      callback(this.returnError(response.body, data));
       return null;
     })
     .catch((e) => {
       debug(e);
-      callback(this.returnError());
+      callback(this.returnError(e.message, data));
     });
 }
 
@@ -138,11 +138,16 @@ function getToken() {
  *
  *  @return array
  */
-function returnError(message) {
+function returnError(message, postData) {
   const data = { is_error: 1 };
-  if (message !== undefined && message.length) {
+  if (message) {
     data.message = message;
   }
+
+  if (postData) {
+    data.postData = postData;
+  }
+
   return data;
 }
 
