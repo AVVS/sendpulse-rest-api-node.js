@@ -73,6 +73,7 @@ function sendRequest(path, _method, data, _useToken, callback) {
     method,
     json: true,
     body: data,
+    simple: false,
     transform2xxOnly: true,
     resolveWithFullResponse: true,
   };
